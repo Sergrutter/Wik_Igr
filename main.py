@@ -1,30 +1,26 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
 
-def read_file(file_path):
-    with open(file_path, 'r') as file:
-        content = file.read()
-    return content
-
-
-@app.route('/')
-def welcome():
-    """Главная страница"""
-    return read_file('home.html')
-
-
-@app.route('/search', methods = ['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def search():
-    """страница поиска других страниц"""
-    return read_file('search.html')
+    if request.method == 'POST':
+        search_query = request.form.get('search_query')
+        return render_template('search_results.html', search_query=search_query)
+    return render_template('home.html')
 
 
 @app.route('/text_block')
 def text_block():
     """Страница на какую-то тему"""
-    return read_file('text_block.html')
+    return render_template('templates/text_block.html')
+
+
+@app.route('/search_results')
+def search_results():
+    """результаты поиска"""
+    return render_template('templates/search_results.html')
 
 
 if __name__ == '__main__':
