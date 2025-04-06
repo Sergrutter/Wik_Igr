@@ -1,5 +1,5 @@
-from flask import Flask, render_template, request
-
+from flask import Flask, render_template, request  # библиотеки
+from db import Page as Pg, User  # импорт таблиц из базы даных
 app = Flask(__name__)
 
 
