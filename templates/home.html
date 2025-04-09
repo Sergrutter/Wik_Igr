@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Главная страница</h1>
+
+    <form method="POST" action="{{ url_for('search') }}">
+        <input type="text" name="search_query" placeholder="Поиск страниц...">
+        <button type="submit">Искать</button>
+    </form>
+
+    <h2>Все страницы:</h2>
+    {% for page in pages %}
+        <div>
+            <h3>{{ page.title }}</h3>
+            <p>Автор: {{ page.author.username }}</p>
+            <p>{{ page.content[:100] }}...</p>
+        </div>
+    {% endfor %}
+{% endblock %}

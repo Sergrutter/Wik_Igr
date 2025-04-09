@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Search Pages{% endblock %}
+
+{% block content %}
+<h2>Search for a Page</h2>
+<form method="POST">
+    <div>
+        <label for="search_query">Search Query:</label>
+        <input type="text" id="search_query" name="search_query" required>
+    </div>
+    <button type="submit">Search</button>
+</form>
+{% endblock %}

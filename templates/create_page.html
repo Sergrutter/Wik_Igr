@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Создать новую страницу</h1>
+    <form method="POST">
+        <input type="text" name="title" placeholder="Название страницы" required>
+        <textarea name="content" placeholder="Содержание" required></textarea>
+        <button type="submit">Создать</button>
+    </form>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Результаты поиска: "{{ query }}"</h1>
+    
+    {% if pages %}
+        {% for page in pages %}
+            <div>
+                <h3>{{ page.title }}</h3>
+                <p>Автор: {{ page.author.username }}</p>
+                <p>{{ page.content[:100] }}...</p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>Ничего не найдено</p>
+    {% endif %}
+{% endblock %}
