@@ -9,4 +9,34 @@
     </div>
     <button type="submit">Search</button>
 </form>
+
+<div id="searchResults"></div>
+
+<script>
+    document.querySelector('form').addEventListener('submit', function(e) {
+        e.preventDefault(); // Предотвращаем отправку формы
+
+        var searchQuery = document.getElementById('search_query').value;
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/search', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                var searchResults = JSON.parse(xhr.responseText);
+                document.getElementById('searchResults').innerHTML = '';
+                for (var i = 0; i < searchResults.length; i++) {
+                    var page = searchResults[i];
+                    var resultItem = document.createElement('div');
+                    resultItem.innerHTML = page.title;
+                    resultItem.addEventListener('click', function() {
+                        // Переход на страницу при клике на подсказку
+                        window.location.href = '/page/' + page.id;
+                    });
+                    document.getElementById('searchResults').appendChild(resultItem);
+                }
+            }
+        };
+        xhr.send('search_query=' + encodeURIComponent(searchQuery));
+    });
+</script>
 {% endblock %}
