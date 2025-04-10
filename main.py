@@ -1,65 +1,123 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
+app.config['SECRET_KEY'] = 'your-secret-key-here'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+
+
+class User(UserMixin, db.Model):
+    """Модель пользователя"""
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    pages = db.relationship('Page', backref='author', lazy=True)
 
 
 class Page(db.Model):
-    """Таблица для хранения созданных страниц"""
-    id = db.Column(db.Integer, primary_key = True)
-    name = db.Column(db.String(100), nullable = False)
-    creator = db.Column(db.String(100), nullable = False)
-    url = db.Column(db.String(200), nullable = False)
+    """Модель страницы"""
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 
-class User(db.Model):
-    """Таблица для хранения зарегистрировавшихся пользователей"""
-    id = db.Column(db.Integer, primary_key = True)
-    email = db.Column(db.String(100), nullable = False)
-    name = db.Column(db.String(100), nullable = False)
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
-with app.app_context():
-    """Оберните код, использующий Flask-SQLAlchemy, в контекст приложения.
-    Фикс непонятной ошибки"""
-    db.create_all()  # Create tables in the database
-    app.run()  # запуск приложения
-
-
-@app.route('/', methods=['GET', 'POST'])
-def search():
-    if request.method == 'POST':
-        search_query = request.form.get('search_query')
-        return render_template('search_results.html', search_query=search_query)
-    return render_template('templates/home.html')
-
-
-@app.route('/text_block')
-def text_block():
-    """Страница на какую-то тему"""
-    return render_template('templates/text_block.html')
-
-
-@app.route('/search_results')
-def search_results():
-    """результаты поиска"""
-    return render_template('templates/search_results.html')
+@app.route('/')
+def home():
+    pages = Page.query.all()
+    return render_template('home.html', pages=pages)
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        email = request.form.get('email')
-        name = request.form.get('name')
-        # Создание нового пользователя
-        new_user = User(email=email, name=name)
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+
+        # Проверка, существует ли пользователь
+        existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
+        if existing_user:
+            flash('Пользователь с таким именем или email уже существует', 'danger')
+            return redirect(url_for('register'))
+
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+
+        new_user = User(username=username, email=email, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
-        return redirect(url_for('home'))
+
+        flash('Регистрация прошла успешно! Теперь вы можете войти.', 'success')
+        return redirect(url_for('login'))
+
     return render_template('register.html')
 
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+            return redirect(url_for('home'))
+        else:
+            flash('Неверный email или пароль', 'danger')
+
+    return render_template('login.html')
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+
+
+@app.route('/create_page', methods=['GET', 'POST'])
+@login_required
+def create_page():
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+
+        new_page = Page(title=title, content=content, author=current_user)
+        db.session.add(new_page)
+        db.session.commit()
+
+        flash('Страница успешно создана!', 'success')
+        return redirect(url_for('home'))
+
+    return render_template('create_page.html')
+
+
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    if request.method == 'POST':
+        search_query = request.form['search_query']
+        pages = Page.query.filter(Page.title.contains(search_query)).all()
+        return render_template('search_results.html', pages=pages, query=search_query)
+
+    return redirect(url_for('home'))
+
+
 if __name__ == '__main__':
-    app.run()
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)

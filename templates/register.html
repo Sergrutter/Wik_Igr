@@ -14,15 +14,15 @@
     </style>
 </head>
 <body>
-    <h1>User Registration</h1>
-    <form action="/register" method="POST">
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
-        <br>
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" required>
-        <br>
-        <input type="submit" value="Register">
+    {% extends "base.html" %}
+    {% block content %}
+    <h1>Регистрация</h1>
+    <form method="POST">
+        <input type="text" name="username" placeholder="Имя пользователя" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Пароль" required>
+        <button type="submit">Зарегистрироваться</button>
     </form>
+    {% endblock %}
 </body>
 </html>
