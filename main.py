@@ -117,6 +117,12 @@ def search():
     return redirect(url_for('home'))
 
 
+@app.route('/page/<int:page_id>')
+def page_detail(page_id):
+    page = Page.query.get(page_id)
+    return render_template('text_block.html', page=page)
+
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

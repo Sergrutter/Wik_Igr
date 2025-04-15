@@ -10,16 +10,13 @@
             text-align: center;
         }
     </style>
-    <form action="/search" method="POST">
-        <label for="search_query">Search Query:</label>
-        <input type="text" id="search_query" name="search_query">
-        <input type="submit" value="Search">
-    </form>
 </head>
 <body>
     <p>TEXT</p>
     <div>
-        <p>This is a text block.</p>
+        <h3>{{ page.title }}</h3>
+        <p>Автор: {{ page.author.username }}</p>
+        <p>{{ page.content }}</p>
     </div>
 </body>
 </html>

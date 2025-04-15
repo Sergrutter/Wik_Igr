@@ -1,15 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Search Page</title>
+    <title>Home Page</title>
     <style>
         body {
             background-color: #121212;
             color: #ffffff;
             font-family: Arial, sans-serif;
+            padding: 20px;
         }
         h1 {
             text-align: center;
+            margin-bottom: 30px;
+        }
+        form {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            width: 300px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #ffffff;
+            color: #121212;
+            border: none;
+            cursor: pointer;
+        }
+        .page {
+            border: 1px solid #ffffff;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .page h3 {
+            margin-top: 0;
         }
     </style>
 </head>
@@ -25,8 +52,8 @@
 
     <h2>Все страницы:</h2>
     {% for page in pages %}
-        <div>
-            <h3>{{ page.title }}</h3>
+        <div class="page">
+            <h3><a href="{{ url_for('page_detail', page_id=page.id) }}">{{ page.title }}</a></h3>
             <p>Автор: {{ page.author.username }}</p>
             <p>{{ page.content[:100] }}...</p>
         </div>
@@ -34,4 +61,3 @@
     {% endblock %}
 </body>
 </html>
-
