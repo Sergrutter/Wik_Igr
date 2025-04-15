@@ -7,9 +7,19 @@
             background-color: #121212;
             color: #ffffff;
             font-family: Arial, sans-serif;
+            padding: 20px;
         }
         h1 {
             text-align: center;
+            margin-bottom: 30px;
+        }
+        .page {
+            border: 1px solid #ffffff;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .page h3 {
+            margin-top: 0;
         }
     </style>
 </head>
@@ -19,7 +29,7 @@
     <h1>Результаты поиска: "{{ query }}"</h1>
     {% if pages %}
         {% for page in pages %}
-            <div>
+            <div class="page">
                 <h3><a href="{{ url_for('page_detail', page_id=page.id) }}">{{ page.title }}</a></h3>
                 <p>Автор: {{ page.author.username }}</p>
                 <p>{{ page.content[:100] }}...</p>
@@ -31,5 +41,3 @@
 {% endblock %}
 </body>
 </html>
-
-
