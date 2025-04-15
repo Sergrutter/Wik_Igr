@@ -123,6 +123,26 @@ def page_detail(page_id):
     return render_template('text_block.html', page=page)
 
 
+@app.route('/edit_page/<int:page_id>', methods=['GET', 'POST'])
+@login_required
+def edit_page(page_id):
+    page = Page.query.get(page_id)
+
+    if current_user.id != page.user_id:
+        flash('У вас нет прав для редактирования этой страницы', 'danger')
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        page.title = request.form['page_name']
+        page.content = request.form['content']
+        db.session.commit()
+
+        flash('Страница успешно обновлена', 'success')
+        return redirect(url_for('page_detail', page_id=page_id))
+
+    return render_template('edit_page.html', page=page)
+
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
