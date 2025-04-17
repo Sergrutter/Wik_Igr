@@ -96,7 +96,7 @@ def logout():
 def create_page():
     if request.method == 'POST':
         title = request.form['title']
-        content = request.form['content']
+        content = request.form['page_name']
 
         new_page = Page(title=title, content=content, author=current_user)
         db.session.add(new_page)
