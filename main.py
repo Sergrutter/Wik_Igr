@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from rapidfuzz import fuzz
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
@@ -110,8 +111,18 @@ def create_page():
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     if request.method == 'POST':
-        search_query = request.form['search_query']
-        pages = Page.query.filter(Page.title.contains(search_query)).all()
+        search_query = request.form['search_query'].lower()
+        all_pages = Page.query.all()
+
+        matched_pages = []
+        for page in all_pages:
+            score = fuzz.partial_ratio(search_query, page.title.lower())
+            if score > 60:
+                matched_pages.append((score, page))
+
+        matched_pages.sort(reverse=True, key=lambda x: x[0])
+        pages = [p[1] for p in matched_pages]
+
         return render_template('search_results.html', pages=pages, query=search_query)
 
     return redirect(url_for('home'))
