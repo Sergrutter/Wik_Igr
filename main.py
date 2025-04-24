@@ -77,7 +77,8 @@ def send_email(recipient_email, subject, message):
         with smtplib.SMTP_SSL('smtp.gmail.com', 465, context = context) as server:
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, recipient_email, msg.as_string())
-        print("Email sent successfully.")
+        print("Email sent successfully.", context)
+        return context
     except Exception as e:
         print("An error occurred while sending the email:", e)
 
@@ -89,24 +90,24 @@ def register():
         email = request.form['email']
         password = request.form['password']
 
-        send_email(email, 'Подтверждение регистрации на Свободной Энциклопедии',
-                   generate_password(random.randint(5, 15)))
-
         # Проверка, существует ли пользователь
         existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
         if existing_user:
             flash('Пользователь с таким именем или email уже существует', 'danger')
             return redirect(url_for('register'))
 
+        verification_code = send_email(email, 'Подтверждение регистрации на Свободной Энциклопедии',
+                                       generate_password(random.randint(5, 15)))
 
+        code = request.form['code']
+        if verification_code == code:
+            hashed_password = generate_password_hash(password, method = 'pbkdf2:sha256')
+            new_user = User(username = username, email = email, password = hashed_password)
+            db.session.add(new_user)
+            db.session.commit()
 
-        hashed_password = generate_password_hash(password, method = 'pbkdf2:sha256')
-        new_user = User(username = username, email = email, password = hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-
-        flash('Регистрация прошла успешно! Теперь вы можете войти.', 'success')
-        return redirect(url_for('login'))
+            flash('Регистрация прошла успешно! Теперь вы можете войти.', 'success')
+            return redirect(url_for('login'))
 
     return render_template('register.html')
 
