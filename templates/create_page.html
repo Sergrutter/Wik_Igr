@@ -1,18 +1,19 @@
 {% extends "base.html" %}
-{% block title %}Create New Page{% endblock %}
+{% block title %}Создать страницу{% endblock %}
+
 {% block content %}
-<h2>Создать новую страницу</h2>
-<form method="POST">
-    <div style="display: flex; flex-direction: column;">
-        <div style="margin-bottom: 10px;">
-            <label for="page_name">Название:</label>
-            <input type="text" id="page_name" name="page_name" required>
+<div class="container mt-4">
+    <h2 class="mb-4">Создать новую страницу</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="page_name" class="form-label">Название:</label>
+            <input type="text" class="form-control" id="page_name" name="page_name" required>
         </div>
-        <div>
-            <label for="content">Содержимое:</label>
-            <textarea id="content" name="content" required></textarea>
+        <div class="mb-3">
+            <label for="content" class="form-label">Содержимое:</label>
+            <textarea class="form-control" id="content" name="content" rows="6" required></textarea>
         </div>
-    </div>
-    <button type="submit">Сохранить и опубликовать</button>
-</form>
+        <button type="submit" class="btn btn-success">Сохранить и опубликовать</button>
+    </form>
+</div>
 {% endblock %}
