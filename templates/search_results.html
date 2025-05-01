@@ -1,43 +1,32 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Результат поиска</title>
-    <style>
-        body {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .page {
-            border: 1px solid #ffffff;
-            padding: 10px;
-            margin-bottom: 20px;
-        }
-        .page h3 {
-            margin-top: 0;
-        }
-    </style>
-</head>
-<body>
-    {% extends "base.html" %}
-    {% block content %}
-    <h1>Результаты поиска: "{{ query }}"</h1>
+{% extends "base.html" %}
+{% block title %}Результаты поиска{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Результаты поиска: <em>"{{ query }}"</em></h2>
+
     {% if pages %}
-        {% for page in pages %}
-            <div class="page">
-                <h3><a href="{{ url_for('page_detail', page_id=page.id) }}">{{ page.title }}</a></h3>
-                <p>Автор: {{ page.author.username }}</p>
-                <p>{{ page.content[:100] }}...</p>
-            </div>
-        {% endfor %}
+        <div class="row">
+            {% for page in pages %}
+                <div class="col-md-6 mb-4">
+                    <div class="card bg-dark text-white border-light shadow-sm h-100">
+                        <div class="card-body">
+                            <h4 class="card-title">
+                                <a href="{{ url_for('page_detail', page_id=page.id) }}" class="link-light text-decoration-none">
+                                    {{ page.title }}
+                                </a>
+                            </h4>
+                            <h6 class="card-subtitle text-muted mb-2">Автор: {{ page.author.username }}</h6>
+                            <p class="card-text">{{ page.content[:100] }}...</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
     {% else %}
-        <p>Ничего не найдено</p>
+        <div class="alert alert-warning text-center" role="alert">
+            Ничего не найдено по вашему запросу.
+        </div>
     {% endif %}
+</div>
 {% endblock %}
-</body>
-</html>
