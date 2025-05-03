@@ -11,6 +11,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="mb-3">
                             <label for="page_name" class="form-label">Название страницы</label>
                             <input type="text" class="form-control" id="page_name" name="page_name" value="{{ page.title }}" required>
