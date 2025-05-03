@@ -5,6 +5,7 @@
 <div class="container mt-4">
     <h2 class="mb-4">Создать новую страницу</h2>
     <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-3">
             <label for="page_name" class="form-label">Название:</label>
             <input type="text" class="form-control" id="page_name" name="page_name" required>
