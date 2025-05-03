@@ -1,21 +1,38 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_wtf.csrf import CSRFProtect
 from rapidfuzz import fuzz
+import os
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy()
+login_manager = LoginManager()
+csrf = CSRFProtect()
 
-db = SQLAlchemy(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
+
+def create_app():
+    # Создаем экземпляр приложения
+    app = Flask(__name__)
+
+    # Конфигурация
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # Инициализируем расширения с приложением
+    db.init_app(app)
+    login_manager.init_app(app)
+    csrf.init_app(app)
+
+    login_manager.login_view = 'login'
+
+    return app
+
+app = create_app()
 
 
 class User(UserMixin, db.Model):
-    """Модель пользователя"""
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
@@ -24,7 +41,6 @@ class User(UserMixin, db.Model):
 
 
 class Page(db.Model):
-    """Модель страницы"""
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
@@ -65,6 +81,22 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html')
+
+
+@app.route('/api/search', methods=['POST'])
+def api_search():
+    search_query = request.form.get('search_query', '').lower()
+    results = []
+
+    for page in Page.query.all():
+        if search_query in page.title.lower():
+            results.append({
+                'id': page.id,
+                'title': page.title,
+                'preview': page.content[:100]
+            })
+
+    return jsonify(results)
 
 
 @app.route('/login', methods=['GET', 'POST'])
