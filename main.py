@@ -4,7 +4,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf.csrf import CSRFProtect
 from rapidfuzz import fuzz
+from deep_translator import GoogleTranslator  
 import os
+import random
+import requests
+import xml.etree.ElementTree as ET
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -28,6 +32,7 @@ def create_app():
     login_manager.login_view = 'login'
 
     return app
+
 
 app = create_app()
 
@@ -81,6 +86,17 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html')
+
+
+@app.route('/random')
+def random_page():
+    pages = Page.query.all()
+    if not pages:
+        flash('Нет доступных страниц.', 'info')
+        return redirect(url_for('home'))
+
+    page = random.choice(pages)
+    return redirect(url_for('page_detail', page_id=page.id))
 
 
 @app.route('/api/search', methods=['POST'])
@@ -185,8 +201,29 @@ def edit_page(page_id):
 
     return render_template('edit_page.html', page=page)
 
+#для закачивания новых статей с сайта archive.org
+def import_articles_from_arxiv(query="nature", max_results=5):
+    url = f"http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results={max_results}"
+    response = requests.get(url)
+    root = ET.fromstring(response.content)
+
+    user = User.query.first()
+
+    for entry in root.findall('{http://www.w3.org/2005/Atom}entry'):
+        title = entry.find('{http://www.w3.org/2005/Atom}title').text.strip()
+        summary = entry.find('{http://www.w3.org/2005/Atom}summary').text.strip()
+
+        translated_title = GoogleTranslator(source='auto', target='ru').translate(title)
+        translated_s = GoogleTranslator(source='auto', target='ru').translate(summary)
+
+        new_article = Page(title=translated_title, content=translated_s, author=user)
+        db.session.add(new_article)
+
+    db.session.commit()
+
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        import_articles_from_arxiv()
     app.run(debug=True)
