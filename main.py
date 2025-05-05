@@ -127,8 +127,8 @@ def logout():
 @login_required
 def create_page():
     if request.method == 'POST':
-        title = request.form['title']
-        content = request.form['page_name']
+        title = request.form['page_name']
+        content = request.form['content']
 
         new_page = Page(title=title, content=content, author=current_user)
         db.session.add(new_page)
