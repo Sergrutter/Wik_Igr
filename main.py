@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf.csrf import CSRFProtect
 from rapidfuzz import fuzz
-from deep_translator import GoogleTranslator  
+from deep_translator import GoogleTranslator  # Используем deep-translator для перевода
 import os
 import random
 import requests
@@ -37,11 +37,20 @@ def create_app():
 app = create_app()
 
 
+def get_img(query):
+    url = f"https://api.unsplash.com/photos/random?query={query}&client_id=_k1CxaFIKv7ClydnoC6b8XAI_1O5ZYoyijLPYaVqmcI"
+    r = requests.get(url)
+    if r:
+        return r.json().get('urls', {}).get('small')
+    return None
+
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
+    image_url = db.Column(db.String(300))
     pages = db.relationship('Page', backref='author', lazy=True)
 
 
@@ -49,6 +58,7 @@ class Page(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    image_url = db.Column(db.String(300))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 
@@ -201,7 +211,7 @@ def edit_page(page_id):
 
     return render_template('edit_page.html', page=page)
 
-#для закачивания новых статей с сайта archive.org
+
 def import_articles_from_arxiv(query="nature", max_results=5):
     url = f"http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results={max_results}"
     response = requests.get(url)
@@ -213,10 +223,17 @@ def import_articles_from_arxiv(query="nature", max_results=5):
         title = entry.find('{http://www.w3.org/2005/Atom}title').text.strip()
         summary = entry.find('{http://www.w3.org/2005/Atom}summary').text.strip()
 
-        translated_title = GoogleTranslator(source='auto', target='ru').translate(title)
+        translated_t = GoogleTranslator(source='auto', target='ru').translate(title)
         translated_s = GoogleTranslator(source='auto', target='ru').translate(summary)
 
-        new_article = Page(title=translated_title, content=translated_s, author=user)
+        image_url = get_img(title)
+
+        new_article = Page(
+            title=translated_t,
+            content=translated_s,
+            image_url=image_url,
+            author=user
+        )
         db.session.add(new_article)
 
     db.session.commit()
@@ -225,5 +242,5 @@ def import_articles_from_arxiv(query="nature", max_results=5):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        import_articles_from_arxiv()
+        import_articles_from_arxiv("nature", max_results=5)
     app.run(debug=True)
