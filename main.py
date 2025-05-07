@@ -9,6 +9,7 @@ import os
 import random
 import requests
 import xml.etree.ElementTree as ET
+import datetime
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -60,6 +61,17 @@ class Page(db.Model):
     content = db.Column(db.Text, nullable=False)
     image_url = db.Column(db.String(300))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow())
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    page_id = db.Column(db.Integer, db.ForeignKey('page.id'), nullable=False)
+
+    user = db.relationship('User', backref='comments')
+    page = db.relationship('Page', backref='comments')
 
 
 @login_manager.user_loader
@@ -186,9 +198,21 @@ def search():
     return redirect(url_for('home'))
 
 
-@app.route('/page/<int:page_id>')
+@app.route('/page/<int:page_id>', methods=['GET', 'POST'])
 def page_detail(page_id):
-    page = Page.query.get(page_id)
+    page = Page.query.get_or_404(page_id)
+
+    if request.method == 'POST' and current_user.is_authenticated:
+        comment_text = request.form['comment']
+        if comment_text.strip():
+            comment = Comment(content=comment_text, user_id=current_user.id, page_id=page.id)
+            db.session.add(comment)
+            db.session.commit()
+            flash("Комментарий добавлен", "success")
+            return redirect(url_for('page_detail', page_id=page_id))
+        else:
+            flash("Комментарий не может быть пустым", "warning")
+
     return render_template('text_block.html', page=page)
 
 
@@ -212,17 +236,15 @@ def edit_page(page_id):
     return render_template('edit_page.html', page=page)
 
 
-def import_articles_from_arxiv(query="nature", max_results=5):
+def import_articles_from_arxiv(query, max_results):
     url = f"http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results={max_results}"
     response = requests.get(url)
     root = ET.fromstring(response.content)
-
     user = User.query.first()
 
     for entry in root.findall('{http://www.w3.org/2005/Atom}entry'):
         title = entry.find('{http://www.w3.org/2005/Atom}title').text.strip()
         summary = entry.find('{http://www.w3.org/2005/Atom}summary').text.strip()
-
         translated_t = GoogleTranslator(source='auto', target='ru').translate(title)
         translated_s = GoogleTranslator(source='auto', target='ru').translate(summary)
 
@@ -242,5 +264,5 @@ def import_articles_from_arxiv(query="nature", max_results=5):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        import_articles_from_arxiv("nature", max_results=5)
-    app.run(debug=True)
+        import_articles_from_arxiv("physic", max_results=20)
+app.run(debug=True)
