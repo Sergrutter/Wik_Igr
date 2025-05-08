@@ -45,6 +45,14 @@ def get_img(query):
         return r.json().get('urls', {}).get('small')
     return None
 
+class Category(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True)
+
+page_category = db.Table('page_category',
+    db.Column('page_id', db.Integer, db.ForeignKey('page.id')),
+    db.Column('category_id', db.Integer, db.ForeignKey('category.id'))
+)
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -53,7 +61,9 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(200), nullable=False)
     image_url = db.Column(db.String(300))
     pages = db.relationship('Page', backref='author', lazy=True)
-
+    bio = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Page(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -61,7 +71,16 @@ class Page(db.Model):
     content = db.Column(db.Text, nullable=False)
     image_url = db.Column(db.String(300))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    categories = db.relationship('Category', secondary=page_category, backref='pages')
+    
+class Tag(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(30), unique=True)
 
+    page_tag = db.Table('page_tag',
+        db.Column('page_id', db.Integer, db.ForeignKey('page.id')),
+        db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'))
+)
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -73,17 +92,36 @@ class Comment(db.Model):
     user = db.relationship('User', backref='comments')
     page = db.relationship('Page', backref='comments')
 
+@app.route('/api/pages')
+def api_pages():
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    pages = Page.query.paginate(page=page, per_page=per_page)
+    
+    return jsonify({
+        'pages': [{'id': p.id, 'title': p.title} for p in pages.items],
+        'total': pages.total,
+        'pages': pages.pages
+    })
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
+@app.route('/category/<int:category_id>')
+def show_category(category_id):
+    category = Category.query.get_or_404(category_id)
+    return render_template('category.html', category=category)
+        
 @app.route('/')
 def home():
     pages = Page.query.all()
     return render_template('home.html', pages=pages)
 
+@app.route('/profile/<username>')
+    def profile(username):
+        user = User.query.filter_by(username=username).first_or_404()
+        return render_template('profile.html', user=user)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
