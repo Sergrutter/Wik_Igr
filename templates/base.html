@@ -45,6 +45,10 @@
                 </ul>
             </div>
         </div>
+        <a href="{{ url_for('api_docs') }}">API</a>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('profile', username=current_user.username) }}">Мой профиль</a>
+        {% endif %}
     </nav>
 
     <div class="container">
