@@ -265,4 +265,4 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         import_articles_from_arxiv("physic", max_results=20)
-app.run(debug=True)
+    app.run(host='0.0.0.0', port=3000, debug=True)
