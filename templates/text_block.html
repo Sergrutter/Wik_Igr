@@ -20,21 +20,6 @@
             {% endif %}
         </div>
     </div>
-    <div class="like-section">
-        <button onclick="likePage({{ page.id }})" class="like-btn">
-            ❤️ <span id="like-count">{{ page.likes|length }}</span>
-        </button>
-    </div>
-
-    <script>
-        function likePage(pageId) {
-            fetch('/like/' + pageId, { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('like-count').textContent = data.count;
-                });
-        }
-    </script>
 
     <div class="card shadow-sm mt-4 mx-auto" style="max-width: 900px;">
         <div class="card-body">
@@ -66,5 +51,20 @@
         </div>
     </div>
 </div>
+<div class="like-section">
+    <button onclick="likePage({{ page.id }})" class="like-btn">
+        ❤️ <span id="like-count">{{ page.likes|length }}</span>
+    </button>
+</div>
+
+<script>
+    function likePage(pageId) {
+        fetch('/like/' + pageId, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('like-count').textContent = data.count;
+            });
+    }
+</script>
 {% endblock %}
 
