@@ -6,4 +6,3 @@ Werkzeug
 rapidfuzz
 deep-translator
 requests
-lxml
