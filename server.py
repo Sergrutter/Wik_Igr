@@ -274,33 +274,34 @@ def edit_page(page_id):
     return render_template('edit_page.html', page=page)
 
 
-def import_articles_from_arxiv(query, max_results):
-    url = f"http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results={max_results}"
-    response = requests.get(url)
-    root = ET.fromstring(response.content)
-    user = User.query.first()
+# def import_articles_from_arxiv(query, max_results):
+#     url = f"http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results={max_results}"
+#     response = requests.get(url)
+#     root = ET.fromstring(response.content)
+#     user = User.query.first()
 
-    for entry in root.findall('{http://www.w3.org/2005/Atom}entry'):
-        title = entry.find('{http://www.w3.org/2005/Atom}title').text.strip()
-        summary = entry.find('{http://www.w3.org/2005/Atom}summary').text.strip()
-        translated_t = GoogleTranslator(source='auto', target='ru').translate(title)
-        translated_s = GoogleTranslator(source='auto', target='ru').translate(summary)
+#     for entry in root.findall('{http://www.w3.org/2005/Atom}entry'):
+#         title = entry.find('{http://www.w3.org/2005/Atom}title').text.strip()
+#         summary = entry.find('{http://www.w3.org/2005/Atom}summary').text.strip()
+#         translated_t = GoogleTranslator(source='auto', target='ru').translate(title)
+#         translated_s = GoogleTranslator(source='auto', target='ru').translate(summary)
 
-        image_url = get_img(title)
+#         image_url = get_img(title)
 
-        new_article = Page(
-            title=translated_t,
-            content=translated_s,
-            image_url=image_url,
-            author=user
-        )
-        db.session.add(new_article)
+#         new_article = Page(
+#             title=translated_t,
+#             content=translated_s,
+#             image_url=image_url,
+#             author=user
+#         )
+#         db.session.add(new_article)
 
-    db.session.commit()
+#     db.session.commit()
 
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-        import_articles_from_arxiv("physic", max_results=20)
-    app.run(host='0.0.0.0', port=3000, debug=True)
+        # import_articles_from_arxiv("physic", max_results=20)
+    port = int(os.environ.get("PORT", 3000))
+    app.run(host="0.0.0.0", port=port)
