@@ -275,6 +275,17 @@ def edit_page(page_id):
     return render_template('edit_page.html', page=page)
 
 
+def create_first_user():
+    if User.query.first() is None:
+        user = User(
+            username='Таренс Тао',
+            email='tarens@gmail.com',
+            password='123'
+        )
+        db.session.add(user)
+        db.session.commit()
+        
+
 def import_articles_from_arxiv(query, max_results):
     url = f"http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results={max_results}"
     response = requests.get(url)
@@ -303,5 +314,6 @@ def import_articles_from_arxiv(query, max_results):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        create_first_user() # создание 1 пользователя, чтобы на его имя записывались статьи с архив.орг
         import_articles_from_arxiv("physic", max_results=20)
     app.run(host='0.0.0.0', port=3000, debug=True)
