@@ -216,6 +216,7 @@ def create_page():
     return render_template('create_page.html')
 
 
+@csrf.exempt
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     if request.method == 'POST':
