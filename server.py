@@ -15,6 +15,7 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 csrf = CSRFProtect()
 
+
 def create_app():
     '''Создает и настраивает Flask-приложение с нужными расширениями.'''
     app = Flask(__name__)
@@ -27,7 +28,9 @@ def create_app():
     login_manager.login_view = 'login'
     return app
 
+
 app = create_app()
+
 
 def get_img(query):
     '''Запрашивает случайное изображение с Unsplash по ключевому слову (заголовок статьи)'''
@@ -37,15 +40,18 @@ def get_img(query):
         return r.json().get('urls', {}).get('small')
     return None
 
+
 class Category(db.Model):
     '''Модель для категори, к которым могут принадлежать страницы'''
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True)
 
-    page_category = db.Table('page_category',
-        db.Column('page_id', db.Integer, db.ForeignKey('page.id')),
-        db.Column('category_id', db.Integer, db.ForeignKey('category.id'))
-    )
+
+page_category = db.Table('page_category',
+                         db.Column('page_id', db.Integer, db.ForeignKey('page.id')),
+                         db.Column('category_id', db.Integer, db.ForeignKey('category.id'))
+                         )
+
 
 class User(UserMixin, db.Model):
     '''Модель пользователя с базовыми полями: логин, email, пароль и связанные страницы'''
@@ -56,8 +62,9 @@ class User(UserMixin, db.Model):
     image_url = db.Column(db.String(300))
     pages = db.relationship('Page', backref='author', lazy=True)
     bio = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow())
+    last_seen = db.Column(db.DateTime, default=datetime.datetime.utcnow())
+
 
 class Page(db.Model):
     '''Модель страницы научной статьи'''
@@ -68,15 +75,17 @@ class Page(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     categories = db.relationship('Category', secondary=page_category, backref='pages')
 
+
 class Tag(db.Model):
     '''Модель тегов страниц'''
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30), unique=True)
 
     page_tag = db.Table('page_tag',
-        db.Column('page_id', db.Integer, db.ForeignKey('page.id')),
-        db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'))
-)
+                        db.Column('page_id', db.Integer, db.ForeignKey('page.id')),
+                        db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'))
+                        )
+
 
 class Comment(db.Model):
     '''Модель для создания обсуждений под научными статьями'''
@@ -88,6 +97,7 @@ class Comment(db.Model):
 
     user = db.relationship('User', backref='comments')
     page = db.relationship('Page', backref='comments')
+
 
 @app.route('/api/pages')
 def api_pages():
@@ -102,10 +112,12 @@ def api_pages():
         'pages': pages.pages
     })
 
+
 @login_manager.user_loader
 def load_user(user_id):
     '''Загружает пользователя по ID для Flask-Login'''
     return User.query.get(int(user_id))
+
 
 @app.route('/category/<int:category_id>')
 def show_category(category_id):
@@ -113,17 +125,20 @@ def show_category(category_id):
     category = Category.query.get_or_404(category_id)
     return render_template('category.html', category=category)
 
+
 @app.route('/')
 def home():
     '''Домашняя страница'''
     pages = Page.query.all()
     return render_template('home.html', pages=pages)
 
+
 @app.route('/profile/<username>')
 def profile(username):
     '''Для показа профиля пользователя'''
     user = User.query.filter_by(username=username).first_or_404()
     return render_template('profile.html', user=user)
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -148,6 +163,7 @@ def register():
 
     return render_template('register.html')
 
+
 @app.route('/random')
 def random_page():
     '''Перенаправляет пользователя на рандомно выбранную статью'''
@@ -158,6 +174,7 @@ def random_page():
 
     page = random.choice(pages)
     return redirect(url_for('page_detail', page_id=page.id))
+
 
 @app.route('/api/search', methods=['POST'])
 def api_search():
@@ -175,6 +192,7 @@ def api_search():
 
     return jsonify(results)
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     '''Регистрация пользвателя: ник, почта и пароль'''
@@ -191,12 +209,14 @@ def login():
 
     return render_template('login.html')
 
+
 @app.route('/logout')
 @login_required
 def logout():
     '''Выход пользователя из системы'''
     logout_user()
     return redirect(url_for('home'))
+
 
 @app.route('/create_page', methods=['GET', 'POST'])
 @login_required
@@ -214,6 +234,7 @@ def create_page():
         return redirect(url_for('home'))
 
     return render_template('create_page.html')
+
 
 @csrf.exempt
 @app.route('/search', methods=['GET', 'POST'])
@@ -236,6 +257,8 @@ def search():
 
     return redirect(url_for('home'))
 
+
+@csrf.exempt
 @app.route('/page/<int:page_id>', methods=['GET', 'POST'])
 def page_detail(page_id):
     '''Отображает содержимое страницы и обсуждения под статьями'''
@@ -253,6 +276,7 @@ def page_detail(page_id):
             flash("Комментарий не может быть пустым", "warning")
 
     return render_template('text_block.html', page=page)
+
 
 @app.route('/edit_page/<int:page_id>', methods=['GET', 'POST'])
 @login_required
@@ -274,6 +298,7 @@ def edit_page(page_id):
 
     return render_template('edit_page.html', page=page)
 
+
 def create_first_user():
     '''Создает первого пользователя'''
     if User.query.first() is None:
@@ -284,6 +309,7 @@ def create_first_user():
         )
         db.session.add(user)
         db.session.commit()
+
 
 def import_articles_from_arxiv(query, max_results):
     '''Импортирует статьи из архив.орг, переводит и сохраняет как страницы'''
@@ -310,10 +336,12 @@ def import_articles_from_arxiv(query, max_results):
 
     db.session.commit()
 
+
 if __name__ == '__main__':
     '''Запуск приложения, создание первого пользователя, импорт статей'''
     with app.app_context():
         db.create_all()
         create_first_user()
-        import_articles_from_arxiv("physic", max_results=20)
+        if Page.query.first() is None:
+            import_articles_from_arxiv("machine learning", max_results=100)
     app.run(host='0.0.0.0', port=3000, debug=True)
