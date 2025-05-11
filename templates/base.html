@@ -45,9 +45,9 @@
                 </ul>
             </div>
         </div>
-        <a href="{{ url_for('api_pages') }}">API</a>
+            <a class="btn btn-outline-light ms-2" href="{{ url_for('api_pages') }}">API</a>
         {% if current_user.is_authenticated %}
-        <a href="{{ url_for('profile', username=current_user.username) }}">Мой профиль</a>
+            <a class="btn btn-outline-light ms-2" href="{{ url_for('profile', username=current_user.username) }}">Мой профиль</a>
         {% endif %}
     </nav>
 
